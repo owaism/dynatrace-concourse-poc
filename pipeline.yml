@@ -7,6 +7,10 @@ jobs:
   - aggregate:
     - get: dynatrace-service-broker-source-code
     - get: my-code
+    - get: rc-version
+      params:
+        bump: minor
+        pre: rc
   - aggregate:
       - task: build-unit-test
         config:
@@ -15,12 +19,14 @@ jobs:
           inputs:
             - name: dynatrace-service-broker-source-code
             - name: my-code
+            - name: rc-version
           run:
             path: my-code/build-task.sh
+            args: [rc-version/number]
   - aggregate:
     - put: artifact-repo
       params:
-        from: dynatrace-service-broker-source-code/target/dynatrace-service-broker\.jar
+        from: dynatrace-service-broker-source-code/target/dynatrace-service-broker-.*.jar
 - name: dev-deploy
   public: true
   serial: true
@@ -59,6 +65,14 @@ resources:
   source:
     access_key_id: {{aws_access_key}}
     secret_access_key: {{aws_secret_key}}
-    bucket: {{s3-artifact-bucket}}
+    bucket: {{s3-rc-artifact-bucket}}
     regexp: dynatrace-service-broker-([0-9]+\.[0-9]+\.[0-9]+)\.jar
+    endpoint: s3-us-west-2.amazonaws.com
+- name: rc-version
+  type: semver
+  source:
+    bucket: {{s3-artifact-version-bucket}}
+    key: current-version
+    access_key_id: {{aws_access_key}}
+    secret_access_key: {{aws_secret_key}}
     endpoint: s3-us-west-2.amazonaws.com
