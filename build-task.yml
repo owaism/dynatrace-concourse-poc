@@ -1,0 +1,8 @@
+---
+platform: linux
+image: docker:///jamesdbloom/docker-java8-maven
+inputs:
+  - name: dynatrace-service-broker-source-code
+run:
+  path: mvn
+  args: [clean, package, -B, -fdynatrace-service-broker-source-code/pom.xml]
