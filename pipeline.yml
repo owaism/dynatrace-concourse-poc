@@ -39,7 +39,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: dynatrace-service-broker-source-code
+    - get: my-code
     - get: artifact-repo
       params:
         filename: dynatrace-service-broker-.*.jar
@@ -47,7 +47,7 @@ jobs:
   - aggregate:
     - put: dev-cf
       params:
-        manifest: dynatrace-service-broker-source-code/manifest.yml
+        manifest: my-code/manifest.yml
         path: artifact-repo
 resources:
 - name: dynatrace-service-broker-source-code
