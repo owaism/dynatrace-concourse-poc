@@ -30,38 +30,25 @@ jobs:
           run:
             path: my-code/build-task.sh
             args: [rc-version/number]
-
-  # - aggregate:
-  #     - task: build-unit-test
-  #       config:
-  #         platform: linux
-  #         image: docker:///jamesdbloom/docker-java8-maven
-  #         inputs:
-  #           - name: dynatrace-service-broker-source-code
-  #           - name: my-code
-  #           - name: rc-version
-  #         run:
-  #           path: my-code/build-task.sh
-  #           args: [rc-version/number]
-  # - aggregate:
-  #   - put: artifact-repo
-  #     params:
-  #       from: dynatrace-service-broker-source-code/target/dynatrace-service-broker-.*.jar
-# - name: dev-deploy
-#   public: true
-#   serial: true
-#   plan:
-#   - aggregate:
-#     - get: dynatrace-service-broker-source-code
-#   - aggregate:
-#     - task: build-app
-#       file: build-task.yml
-#   - aggregate:
-#     - put: dev-cf
-#       params:
-#         manifest: dynatrace-service-broker-source-code/manifest.yml
-#         path: dynatrace-service-broker-source-code
-
+  - aggregate:
+    - put: artifact-repo
+      params:
+        from: dynatrace-service-broker-source-code/target/dynatrace-service-broker-.*.jar
+- name: dev-deploy
+  public: true
+  serial: true
+  plan:
+  - aggregate:
+    - get: dynatrace-service-broker-source-code
+    - get: artifact-repo
+      params:
+        filename: dynatrace-service-broker-.*.jar
+        version: rc-version/number
+  - aggregate:
+    - put: dev-cf
+      params:
+        manifest: dynatrace-service-broker-source-code/manifest.yml
+        path: artifact-repo
 resources:
 - name: dynatrace-service-broker-source-code
   type: git
