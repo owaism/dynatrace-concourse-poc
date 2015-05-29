@@ -7,10 +7,17 @@ jobs:
   - aggregate:
     - get: dynatrace-service-broker-source-code
     - get: my-code
+  - aggregate:
     - get: rc-version
+      resource: app-version
       params:
         bump: minor
         pre: rc
+  - aggregate:
+    - put: rc-version
+      resource: app-version
+      params: 
+        file: rc-version/number
   - aggregate:
       - task: build-unit-test
         config:
@@ -23,24 +30,37 @@ jobs:
           run:
             path: my-code/build-task.sh
             args: [rc-version/number]
-  - aggregate:
-    - put: artifact-repo
-      params:
-        from: dynatrace-service-broker-source-code/target/dynatrace-service-broker-.*.jar
-- name: dev-deploy
-  public: true
-  serial: true
-  plan:
-  - aggregate:
-    - get: dynatrace-service-broker-source-code
-  - aggregate:
-    - task: build-app
-      file: build-task.yml
-  - aggregate:
-    - put: dev-cf
-      params:
-        manifest: dynatrace-service-broker-source-code/manifest.yml
-        path: dynatrace-service-broker-source-code
+
+  # - aggregate:
+  #     - task: build-unit-test
+  #       config:
+  #         platform: linux
+  #         image: docker:///jamesdbloom/docker-java8-maven
+  #         inputs:
+  #           - name: dynatrace-service-broker-source-code
+  #           - name: my-code
+  #           - name: rc-version
+  #         run:
+  #           path: my-code/build-task.sh
+  #           args: [rc-version/number]
+  # - aggregate:
+  #   - put: artifact-repo
+  #     params:
+  #       from: dynatrace-service-broker-source-code/target/dynatrace-service-broker-.*.jar
+# - name: dev-deploy
+#   public: true
+#   serial: true
+#   plan:
+#   - aggregate:
+#     - get: dynatrace-service-broker-source-code
+#   - aggregate:
+#     - task: build-app
+#       file: build-task.yml
+#   - aggregate:
+#     - put: dev-cf
+#       params:
+#         manifest: dynatrace-service-broker-source-code/manifest.yml
+#         path: dynatrace-service-broker-source-code
 
 resources:
 - name: dynatrace-service-broker-source-code
@@ -68,7 +88,7 @@ resources:
     bucket: {{s3-rc-artifact-bucket}}
     regexp: dynatrace-service-broker-([0-9]+\.[0-9]+\.[0-9]+)\.jar
     endpoint: s3-us-west-2.amazonaws.com
-- name: rc-version
+- name: app-version
   type: semver
   source:
     bucket: {{s3-artifact-version-bucket}}
