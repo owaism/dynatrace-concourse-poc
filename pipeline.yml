@@ -7,48 +7,62 @@ jobs:
   - aggregate:
     - get: dynatrace-service-broker-source-code
     - get: my-code
-  - aggregate:
     - get: rc-version
       resource: app-version
       params:
         bump: minor
         pre: rc
-  - aggregate:
-    - put: rc-version
-      resource: app-version
-      params: 
-        file: rc-version/number
-  - aggregate:
-      - task: build-unit-test
-        config:
-          platform: linux
-          image: docker:///jamesdbloom/docker-java8-maven
-          inputs:
-            - name: dynatrace-service-broker-source-code
-            - name: my-code
-            - name: rc-version
-          run:
-            path: my-code/build-task.sh
-            args: [rc-version/number]
-  - aggregate:
-    - put: artifact-repo
-      params:
-        from: dynatrace-service-broker-source-code/target/dynatrace-service-broker-.*.jar
-- name: dev-deploy
-  public: true
-  serial: true
-  plan:
-  - aggregate:
-    - get: my-code
-    - get: artifact-repo
-      params:
-        filename: dynatrace-service-broker-.*.jar
-        version: rc-version/number
-  - aggregate:
-    - put: dev-cf
-      params:
-        manifest: my-code/manifest.yml
-        path: artifact-repo
+  - task: build-unit-test
+    config:
+      platform: linux
+      image: docker:///jamesdbloom/docker-java8-maven
+      inputs:
+        - name: dynatrace-service-broker-source-code
+        - name: my-code
+        - name: rc-version
+      run:
+        path: my-code/build-task.sh
+        args: [rc-version/number]
+  - task: display-file-structure
+    config:
+      platform: linux
+      run:
+        path: ls
+        args: [.]
+  - put: rc-version
+    resource: app-version
+    params: 
+      file: rc-version/number
+  - put: artifact-repo
+    params:
+      from: build-unit-test/target/dynatrace-service-broker-.*.jar
+
+# - name: dev-deploy
+#   public: true
+#   serial: true
+#   plan:
+#   - aggregate:
+#     - get: my-code
+#    - get: artifact-repo
+#      params:
+#        filename: dynatrace-service-broker-*.jar
+#        version: rc-version/number
+#   - aggregate:
+#     - task: debug-artificate-repo
+#       config:
+#         platform: linux
+#         inputs:
+#           #- name: artifact-repo
+#           - name: build-unit-test
+#         run:
+#           path: ls
+#           args: [build-unit-test]
+#   - aggregate:
+#     - put: dev-cf
+#       params:
+#         manifest: my-code/manifest.yml
+#         path: artifact-repo/dynatrace-service-broker-0.1.0-rc.17.jar
+
 resources:
 - name: dynatrace-service-broker-source-code
   type: git
